@@ -5,11 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.getValue
+import com.task.moviesdbapp.presentation.main.MainScreen
 import dagger.hilt.android.AndroidEntryPoint
-import org.orbitmvi.orbit.compose.collectAsState
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -17,13 +14,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            val state by vm.collectAsState()
-            MaterialTheme {
-                Surface {
-                    Text(state.greeting)
-                }
-            }
-        }
+        setContent { MaterialTheme { MainScreen() } }
     }
 }

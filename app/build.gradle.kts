@@ -90,8 +90,8 @@ dependencies {
     implementation(libs.moshi.kotlin)
 
     // Coroutines
-    implementation( libs.kotlinx.coroutines.core)
-    implementation( libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
 
     //Dagger
     implementation(libs.hilt.android)
@@ -106,6 +106,14 @@ dependencies {
     // Room components
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
-    implementation( libs.androidx.room.ktx)
+    implementation(libs.androidx.room.ktx)
     testImplementation(kotlin("test"))
+
+    // Lifecycle Compose helpers
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.lifecycle.runtime.compose)
+
+    // Pull-to-refresh + images
+    implementation(libs.accompanist.swiperefresh)
+    implementation(libs.coil.compose)
 }
