@@ -3,7 +3,9 @@ package com.task.moviesdbapp.presentation.all
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -25,6 +27,19 @@ import java.time.format.DateTimeFormatter
 fun AllMoviesScreen(vm: AllMoviesViewModel = hiltViewModel()) {
     val state by vm.container.stateFlow.collectAsState()
     val refreshState = rememberSwipeRefreshState(isRefreshing = state.isRefreshing)
+    val listState = rememberLazyListState()
+
+    // Load next page when we scroll within last ~5 items
+    val shouldLoadMore by remember {
+        derivedStateOf {
+            val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+            val total = listState.layoutInfo.totalItemsCount
+            total > 0 && last >= total - 5
+        }
+    }
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore) vm.onLoadMore()
+    }
 
     if (state.isLoading && state.items.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -36,6 +51,8 @@ fun AllMoviesScreen(vm: AllMoviesViewModel = hiltViewModel()) {
     SwipeRefresh(state = refreshState, onRefresh = vm::onRefresh) {
         MovieList(
             movies = state.items,
+            listState = listState,
+            isLoadingMore = state.isLoadingMore,
             onToggle = { id, fav -> vm.onToggleFavorite(id, fav) }
         )
     }
@@ -50,22 +67,39 @@ fun AllMoviesScreen(vm: AllMoviesViewModel = hiltViewModel()) {
 @Composable
 private fun MovieList(
     movies: List<Movie>,
+    listState: LazyListState,
+    isLoadingMore: Boolean,
     onToggle: (Int, Boolean) -> Unit
 ) {
     val monthFmt = DateTimeFormatter.ofPattern("MMM yyyy")
-    var lastHeader: String? by remember { mutableStateOf(null) }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
+        state = listState,
         contentPadding = PaddingValues(bottom = 16.dp)
     ) {
-        itemsIndexed(movies, key = { _, m -> m.id }) { _, movie ->
+        itemsIndexed(movies, key = { _, m -> m.id }) { index, movie ->
             val header = movie.releaseDate?.format(monthFmt) ?: "Unknown"
-            if (header != lastHeader) {
-                lastHeader = header
+            val prevHeader = movies.getOrNull(index - 1)?.releaseDate?.format(monthFmt) ?: "Unknown"
+            val showHeader = index == 0 || header != prevHeader
+
+            if (showHeader) {
                 ItemHeader(header)
             }
             ItemRow(movie, onToggle)
+        }
+
+        if (isLoadingMore) {
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
         }
     }
 }
@@ -102,9 +136,15 @@ fun ItemRow(movie: Movie, onToggle: (Int, Boolean) -> Unit) {
                 maxLines = 3
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("★ ${"%.1f".format(movie.voteAverage)}", style = MaterialTheme.typography.labelMedium)
+                Text(
+                    "★ ${"%.1f".format(movie.voteAverage)}",
+                    style = MaterialTheme.typography.labelMedium
+                )
                 Spacer(Modifier.width(12.dp))
-                Text(if (movie.isFavorite) "Bookmarked" else "Like", style = MaterialTheme.typography.labelMedium)
+                Text(
+                    if (movie.isFavorite) "Bookmarked" else "Like",
+                    style = MaterialTheme.typography.labelMedium
+                )
             }
         }
         IconButton(onClick = { onToggle(movie.id, !movie.isFavorite) }) {

@@ -24,14 +24,22 @@ class AllMoviesViewModel @Inject constructor(
 
     override val container = container<AllMoviesState, Nothing>(AllMoviesState())
 
+    private var nextPage = 1
+    private var totalPages = Int.MAX_VALUE
+    private var loadingMoreGuard = false
+
     init {
         viewModelScope.launch {
             intent { reduce { state.copy(isLoading = true, error = null) } }
-            fetchPage(1).onFailure { e ->
-                intent { reduce { state.copy(error = e.message, isLoading = false) } }
-            }.onSuccess {
-                intent { reduce { state.copy(isLoading = false) } }
-            }
+            fetchPage(1)
+                .onSuccess { meta ->
+                    nextPage = meta.page + 1
+                    totalPages = meta.totalPages
+                    intent { reduce { state.copy(isLoading = false) } }
+                }
+                .onFailure { e ->
+                    intent { reduce { state.copy(isLoading = false, error = e.message) } }
+                }
         }
         viewModelScope.launch {
             observeAll().collect { list ->
@@ -42,10 +50,31 @@ class AllMoviesViewModel @Inject constructor(
 
     fun onRefresh() = viewModelScope.launch {
         intent { reduce { state.copy(isRefreshing = true, error = null) } }
-        refreshFirst().onFailure { e ->
-            intent { reduce { state.copy(error = e.message) } }
-        }
+        refreshFirst()
+            .onSuccess { meta ->
+                nextPage = meta.page + 1
+                totalPages = meta.totalPages
+            }
+            .onFailure { e ->
+                intent { reduce { state.copy(error = e.message) } }
+            }
         intent { reduce { state.copy(isRefreshing = false) } }
+    }
+
+    fun onLoadMore() {
+        if (loadingMoreGuard) return
+        if (nextPage > totalPages) return
+        loadingMoreGuard = true
+        viewModelScope.launch {
+            intent { reduce { state.copy(isLoadingMore = true) } }
+            fetchPage(nextPage)
+                .onSuccess { meta ->
+                    nextPage = meta.page + 1
+                    totalPages = meta.totalPages
+                }
+            intent { reduce { state.copy(isLoadingMore = false) } }
+            loadingMoreGuard = false
+        }
     }
 
     fun onToggleFavorite(id: Int, toFav: Boolean) = viewModelScope.launch {

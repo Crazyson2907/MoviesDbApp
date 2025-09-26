@@ -4,6 +4,7 @@ import com.task.moviesdbapp.data.local.MovieDao
 import com.task.moviesdbapp.domain.cache.core.MoviesRepository
 import com.task.moviesdbapp.domain.cache.entity.MovieEntity
 import com.task.moviesdbapp.domain.core.model.Movie
+import com.task.moviesdbapp.domain.core.model.PagingMeta
 import com.task.moviesdbapp.domain.network.core.TmdbApi
 import com.task.moviesdbapp.domain.network.model.MoviesResponse
 import kotlinx.coroutines.flow.Flow
@@ -18,7 +19,7 @@ class MoviesRepositoryImpl @Inject constructor(
     override fun observeAll(): Flow<List<Movie>> = dao.observeAll()
     override fun observeFavorites(): Flow<List<Movie>> = dao.observeFavorites()
 
-    override suspend fun fetchPage(page: Int): Result<Unit> = runCatching {
+    override suspend fun fetchPage(page: Int): Result<PagingMeta> = runCatching {
         val today = LocalDate.now().toString()
         val resp: MoviesResponse = api.discoverMovies(page = page, releaseBefore = today)
         val favoriteIds = dao.getFavoriteIds().toSet()
@@ -35,6 +36,7 @@ class MoviesRepositoryImpl @Inject constructor(
             )
         }
         dao.upsertAll(entities)
+        PagingMeta(resp.page, resp.totalPages)
     }
 
     override suspend fun toggleFavorite(movieId: Int, favorite: Boolean): Result<Unit> =
