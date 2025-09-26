@@ -1,9 +1,20 @@
+import java.io.FileInputStream
+import java.util.Properties
+import kotlin.apply
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlinAndroidKsp)
     alias(libs.plugins.hiltAndroid)
+}
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(FileInputStream(localPropertiesFile))
+    }
 }
 
 android {
@@ -18,6 +29,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val tmdbKey = (project.findProperty("TMDB_API_KEY") as String?) ?: ""
+        buildConfigField("String", "TMDB_API_KEY", "\"$tmdbKey\"")
+        buildConfigField("String", "TMDB_BASE_URL", "\"https://api.themoviedb.org/3/\"")
     }
 
     buildTypes {
@@ -30,12 +45,13 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "11" }
+    kotlinOptions { jvmTarget = "17" }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -67,7 +83,11 @@ dependencies {
 
     // Retrofit for network calls
     implementation(libs.retrofit)
-    implementation( libs.converter.gson)
+    implementation(libs.converter.gson)
+    implementation(libs.retrofit.moshi)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
+    implementation(libs.moshi.kotlin)
 
     // Coroutines
     implementation( libs.kotlinx.coroutines.core)
