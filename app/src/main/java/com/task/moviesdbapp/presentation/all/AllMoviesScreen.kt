@@ -21,6 +21,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.task.moviesdbapp.domain.core.model.Movie
+import com.task.moviesdbapp.presentation.main.EmptyFirstRunOffline
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -45,6 +46,11 @@ fun AllMoviesScreen(vm: AllMoviesViewModel = hiltViewModel()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
+        return
+    }
+
+    if (state.firstRunOffline) {
+        EmptyFirstRunOffline(onRetry = vm::retryInitial)
         return
     }
 

@@ -35,10 +35,19 @@ class AllMoviesViewModel @Inject constructor(
                 .onSuccess { meta ->
                     nextPage = meta.page + 1
                     totalPages = meta.totalPages
-                    intent { reduce { state.copy(isLoading = false) } }
+                    intent { reduce { state.copy(isLoading = false, firstRunOffline = false) } }
                 }
                 .onFailure { e ->
-                    intent { reduce { state.copy(isLoading = false, error = e.message) } }
+                    intent {
+                        val offline = state.items.isEmpty()
+                        reduce {
+                            state.copy(
+                                isLoading = false,
+                                error = if (offline) null else e.message,
+                                firstRunOffline = offline
+                            )
+                        }
+                    }
                 }
         }
         viewModelScope.launch {
@@ -46,6 +55,18 @@ class AllMoviesViewModel @Inject constructor(
                 intent { reduce { state.copy(items = list) } }
             }
         }
+    }
+
+    fun retryInitial() = viewModelScope.launch {
+        intent { reduce { state.copy(isLoading = true, error = null, firstRunOffline = false) } }
+        fetchPage(1)
+            .onSuccess { meta ->
+                nextPage = meta.page + 1; totalPages = meta.totalPages
+            }
+            .onFailure { e ->
+                intent { reduce { state.copy(firstRunOffline = state.items.isEmpty()) } }
+            }
+        intent { reduce { state.copy(isLoading = false) } }
     }
 
     fun onRefresh() = viewModelScope.launch {

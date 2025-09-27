@@ -7,5 +7,6 @@ data class AllMoviesState(
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val firstRunOffline: Boolean = false
 )
