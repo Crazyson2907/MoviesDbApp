@@ -29,10 +29,12 @@ coil = "2.6.0"
 accompanist = "0.36.0"
 playAuth = "21.2.0"
 datastore = "1.1.1"
+coroutinesTest = "1.8.1"
+mockk = "1.13.12"
+turbine = "1.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
-androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -76,6 +78,9 @@ coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
 accompanist-swiperefresh = { module = "com.google.accompanist:accompanist-swiperefresh", version.ref = "accompanist" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playAuth" }
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+orbit-test = { module = "org.orbit-mvi:orbit-test", version.ref = "orbit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

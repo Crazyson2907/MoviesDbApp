@@ -9,11 +9,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -21,6 +23,8 @@ import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.task.moviesdbapp.domain.core.model.Movie
+import com.task.moviesdbapp.domain.core.model.tmdbWebUrl
+import com.task.moviesdbapp.domain.core.util.shareMovie
 import com.task.moviesdbapp.presentation.main.EmptyFirstRunOffline
 import java.time.format.DateTimeFormatter
 
@@ -121,6 +125,8 @@ private fun ItemHeader(text: String) {
 
 @Composable
 fun ItemRow(movie: Movie, onToggle: (Int, Boolean) -> Unit) {
+    val ctx = LocalContext.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -151,6 +157,11 @@ fun ItemRow(movie: Movie, onToggle: (Int, Boolean) -> Unit) {
                     if (movie.isFavorite) "Bookmarked" else "Like",
                     style = MaterialTheme.typography.labelMedium
                 )
+                IconButton(onClick = {
+                    ctx.shareMovie(movie.title, tmdbWebUrl(movie.id))
+                }) {
+                    Icon(Icons.Filled.Share, contentDescription = "Share")
+                }
             }
         }
         IconButton(onClick = { onToggle(movie.id, !movie.isFavorite) }) {

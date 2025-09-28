@@ -1,10 +1,12 @@
 package com.task.moviesdbapp.presentation.auth
 
 import android.content.Intent
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.common.api.ApiException
 import com.task.moviesdbapp.data.auth.UserPrefs
 import com.task.moviesdbapp.domain.core.model.UserProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,10 +39,15 @@ class AuthViewModel @Inject constructor(
 
     fun handleSignInResult(data: Intent?) = viewModelScope.launch {
         val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-        runCatching { task.result }.onSuccess { acct ->
+        try {
+            val acct = task.getResult(ApiException::class.java)
             val p = UserProfile(acct.displayName, acct.email, acct.photoUrl?.toString())
             prefs.save(p)
             intent { reduce { state.copy(profile = p, signedIn = true) } }
+            Log.d("GSI", "Sign-in OK: ${acct.email}")
+        } catch (e: ApiException) {
+            Log.e("GSI", "Sign-in failed. code=${e.statusCode}, message=${e.message}", e)
+            intent { reduce { state.copy() } }
         }
     }
 
