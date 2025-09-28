@@ -78,6 +78,8 @@ dependencies {
     testImplementation(libs.robolectric)
     androidTestImplementation(libs.androidx.ui.test.junit4)
     androidTestImplementation(libs.hilt.android.testing)
+    implementation(libs.play.services.auth)
+    implementation(libs.datastore.preferences)
 
     // Retrofit for network calls
     implementation(libs.retrofit)
