@@ -1,55 +1,33 @@
 package com.task.moviesdbapp
 
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
-import com.task.moviesdbapp.data.local.AppDatabase
-import com.task.moviesdbapp.data.local.MovieDao
 import com.task.moviesdbapp.data.remote.MoviesRepositoryImpl
-import com.task.moviesdbapp.domain.cache.core.MoviesRepository
-import com.task.moviesdbapp.domain.network.core.TmdbApi
-import com.task.moviesdbapp.domain.network.model.MovieDto
-import com.task.moviesdbapp.domain.network.model.MoviesResponse
+import com.task.moviesdbapp.fakes.FakeMovieDao
+import com.task.moviesdbapp.fakes.FakeTmdbApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Rule
 import org.junit.Test
-import android.content.Context
-
-private class FakeApi : TmdbApi {
-    override suspend fun discoverMovies(
-        page: Int,
-        minVote: Double,
-        minVotes: Int,
-        sortBy: String,
-        releaseBefore: String
-    ): MoviesResponse = MoviesResponse(
-        page = page,
-        results = listOf(
-            MovieDto(
-                id = 42, title = "Fake", overview = "O", releaseDate = "2023-01-02",
-                posterPath = null, voteAverage = 7.8, voteCount = 123
-            )
-        ),
-        totalPages = 1
-    )
-}
-
-@get:Rule
-val main = MainDispatcherRule()
 
 class MoviesRepositoryImplTest {
     @Test
-    fun upserts_and_observes() = runBlocking {
-        val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val db = Room.inMemoryDatabaseBuilder(ctx, AppDatabase::class.java).build()
-        val dao: MovieDao = db.movieDao()
-        val api = FakeApi()
-        val repo: MoviesRepository = MoviesRepositoryImpl(dao, api)
+    fun fetch_inserts_and_observes() = runTest {
+        val dao = FakeMovieDao()
+        val api = FakeTmdbApi(totalPages = 1)
+        val repo = MoviesRepositoryImpl(dao, api)
 
-        repo.fetchPage(1)
+        // fetch page 1
+        val meta = repo.fetchPage(1).getOrThrow()
+        assertEquals(1, meta.page)
+        assertEquals(1, meta.totalPages)
+
+        // observe list
         val list = repo.observeAll().first()
         assertEquals(1, list.size)
-        assertEquals(42, list.first().id)
+        assertEquals(100, list.first().id)
+
+        // toggle favorite
+        repo.toggleFavorite(100, true)
+        val favs = repo.observeFavorites().first()
+        assertEquals(true, favs.first().isFavorite)
     }
 }
